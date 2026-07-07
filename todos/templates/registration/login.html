@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Log in - Todo App</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'todos/css/style.css' %}">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body class="auth-page">
+    <div class="card auth-card">
+        <h2>Welcome Back</h2>
+        <p class="subtitle">Log in to manage your tasks</p>
+        
+        {% if form.non_field_errors %}
+            <div class="errorlist">{{ form.non_field_errors }}</div>
+        {% endif %}
+        
+        <form method="post" autocomplete="off">
+            {% csrf_token %}
+            <div class="field username">
+                {{ form.username.label_tag }}
+                {{ form.username }}
+                {{ form.username.errors }}
+            </div>
+            <div class="field password">
+                {{ form.password.label_tag }}
+                {{ form.password }}
+                {{ form.password.errors }}
+            </div>
+            <button type="submit">
+                <span>Log in</span>
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" style="display: inline; vertical-align: middle; margin-left: 8px;">
+                    <path d="M4.16666 10H15.8333M15.8333 10L10 4.16669M15.8333 10L10 15.8334" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </button>
+        </form>
+        
+        <p>Don't have an account? <a href="{% url 'signup' %}">Sign up free</a></p>
+    </div>
+</body>
+</html>

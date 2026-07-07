@@ -1,0 +1,203 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Todo App - Stay Organized</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'todos/css/style.css' %}">
+</head>
+<body>
+  {% with circumference=219.9 %}
+  <div class="hero">
+    <div class="hero-inner">
+      <div>
+        <h1>✨ My Tasks</h1>
+        <p><strong>{{ completed_count }}</strong> of <strong>{{ total }}</strong> tasks completed today</p>
+        <div class="user-bar">
+          <span>👤 {{ request.user.username }}</span>
+          <form method="post" action="{% url 'logout' %}" style="display: inline;">
+            {% csrf_token %}
+            <button type="submit">🚪 Log out</button>
+          </form>
+        </div>
+      </div>
+      <div class="ring-wrap">
+        <svg width="84" height="84" viewBox="0 0 84 84">
+          <circle class="ring-bg" cx="42" cy="42" r="35"></circle>
+          <circle class="ring-fg" cx="42" cy="42" r="35"
+            stroke-dasharray="{{ circumference }}"
+            stroke-dashoffset="{{ circumference|add:'-0' }}"
+            style="stroke-dashoffset: calc({{ circumference }} - ({{ circumference }} * {{ percent }} / 100));">
+          </circle>
+        </svg>
+        <div class="ring-label">{{ percent }}%</div>
+      </div>
+    </div>
+  </div>
+  {% endwith %}
+
+  <div class="wrap">
+    <div class="card add-card">
+      <form class="add-form" method="post" action="{% url 'todo_list' %}">
+        {% csrf_token %}
+        <input type="hidden" name="filter" value="{{ status }}">
+        <input type="hidden" name="q" value="{{ query }}">
+        <input type="hidden" name="category" value="{{ selected_category }}">
+        <input type="text" name="title" placeholder="✨ What needs to be done?" required autofocus>
+        <div class="add-form-row">
+          <select name="priority">
+            <option value="low">🟢 Low Priority</option>
+            <option value="medium" selected>🟡 Medium Priority</option>
+            <option value="high">🔴 High Priority</option>
+          </select>
+          <select name="category">
+            <option value="">📂 No Category</option>
+            {% for c in categories %}
+              <option value="{{ c.id }}">{{ c.name }}</option>
+            {% endfor %}
+          </select>
+          <input type="date" name="due_date" placeholder="Due date">
+        </div>
+        <button type="submit" class="btn-add">
+          <span>➕ Add Task</span>
+        </button>
+      </form>
+    </div>
+
+    <div class="toolbar">
+      <div class="pills">
+        <a class="pill {% if status == 'all' %}active{% endif %}" href="?filter=all&q={{ query }}&category={{ selected_category }}">
+          📋 All
+        </a>
+        <a class="pill {% if status == 'active' %}active{% endif %}" href="?filter=active&q={{ query }}&category={{ selected_category }}">
+          ⏳ Active
+        </a>
+        <a class="pill {% if status == 'completed' %}active{% endif %}" href="?filter=completed&q={{ query }}&category={{ selected_category }}">
+          ✅ Completed
+        </a>
+      </div>
+      <form class="search-box" method="get" action="{% url 'todo_list' %}">
+        <input type="hidden" name="filter" value="{{ status }}">
+        <select name="category" onchange="this.form.submit()">
+          <option value="">🏷️ All Categories</option>
+          {% for c in categories %}
+            <option value="{{ c.id }}" {% if selected_category == c.id|stringformat:"s" %}selected{% endif %}>{{ c.name }}</option>
+          {% endfor %}
+        </select>
+        <input type="text" name="q" placeholder="🔍 Search tasks…" value="{{ query }}">
+      </form>
+    </div>
+
+    {% if todos %}
+    <ul class="todo-list">
+      {% for todo in todos %}
+      <li class="todo-item priority-{{ todo.priority }} {% if todo.completed %}completed{% endif %}">
+        <form method="post" action="{% url 'toggle_todo' todo.pk %}">
+          {% csrf_token %}
+          <input type="hidden" name="filter" value="{{ status }}">
+          <input type="hidden" name="q" value="{{ query }}">
+          <input type="hidden" name="category" value="{{ selected_category }}">
+          <button type="submit" class="check-btn" aria-label="Toggle complete" title="Mark as {% if todo.completed %}incomplete{% else %}complete{% endif %}">
+            <svg viewBox="0 0 16 16" fill="none">
+              <path d="M2 8l4 4 8-8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+        </form>
+
+        <div class="todo-body">
+          <div class="todo-title">{{ todo.title }}</div>
+          <div class="todo-meta">
+            {% if todo.category %}
+              <span class="tag" style="background: {{ todo.category.color }};">
+                📁 {{ todo.category.name }}
+              </span>
+            {% endif %}
+            {% if todo.due_date %}
+              <span class="tag due {% if todo.is_overdue %}overdue{% endif %}">
+                {% if todo.is_overdue %}⚠️ Overdue · {% endif %}📅 {{ todo.due_date|date:"M j, Y" }}
+              </span>
+            {% endif %}
+            {% if todo.priority == 'high' %}
+              <span class="tag overdue">🔥 High Priority</span>
+            {% endif %}
+          </div>
+        </div>
+
+        <form method="post" action="{% url 'delete_todo' todo.pk %}">
+          {% csrf_token %}
+          <input type="hidden" name="filter" value="{{ status }}">
+          <input type="hidden" name="q" value="{{ query }}">
+          <input type="hidden" name="category" value="{{ selected_category }}">
+          <button type="submit" class="delete-btn" aria-label="Delete" title="Delete task">🗑️</button>
+        </form>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+      <div class="empty-state">
+        <span class="emoji">
+          {% if query or selected_category %}
+            🔍
+          {% else %}
+            🎉
+          {% endif %}
+        </span>
+        <h3>
+          {% if query or selected_category %}
+            No matching tasks found
+          {% else %}
+            All clear! Time to add new tasks
+          {% endif %}
+        </h3>
+        <p>
+          {% if query or selected_category %}
+            Try adjusting your search or category filter
+          {% else %}
+            Start by adding your first task above and boost your productivity!
+          {% endif %}
+        </p>
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- Scroll to Top Button -->
+  <button class="scroll-top-btn" id="scrollTopBtn" title="Go to top">↑</button>
+
+  <script>
+    // Scroll to top button functionality
+    const scrollTopBtn = document.getElementById('scrollTopBtn');
+    
+    window.addEventListener('scroll', () => {
+      if (window.pageYOffset > 300) {
+        scrollTopBtn.classList.add('visible');
+      } else {
+        scrollTopBtn.classList.remove('visible');
+      }
+    });
+    
+    scrollTopBtn.addEventListener('click', () => {
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      });
+    });
+    
+    // Add subtle animation to todo items on load
+    document.addEventListener('DOMContentLoaded', () => {
+      const todoItems = document.querySelectorAll('.todo-item');
+      todoItems.forEach((item, index) => {
+        item.style.opacity = '0';
+        item.style.transform = 'translateY(20px)';
+        setTimeout(() => {
+          item.style.transition = 'all 0.5s ease';
+          item.style.opacity = '1';
+          item.style.transform = 'translateY(0)';
+        }, index * 50);
+      });
+    });
+  </script>
+</body>
+</html>

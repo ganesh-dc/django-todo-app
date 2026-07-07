@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Sign up - Todo App</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'todos/css/style.css' %}">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body class="auth-page">
+    <div class="card auth-card">
+        <h2>Get Started</h2>
+        <p class="subtitle">Create your free account</p>
+        
+        <form method="post" autocomplete="off">
+            {% csrf_token %}
+            
+            <!-- Render fields with appropriate icons -->
+            {% for field in form %}
+                <div class="field {% if 'username' in field.name %}username{% elif 'password1' in field.name or 'password' in field.name %}password{% elif 'email' in field.name %}email{% endif %}">
+                    {{ field.label_tag }}
+                    {{ field }}
+                    {{ field.errors }}
+                </div>
+            {% endfor %}
+            
+            <button type="submit">Create Account</button>
+        </form>
+        
+        <p>Already have an account? <a href="{% url 'login' %}">Log in</a></p>
+    </div>
+</body>
+</html>
