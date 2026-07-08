@@ -7,7 +7,7 @@ urlpatterns = [
     path("accounts/login/", auth_views.LoginView.as_view(), name="login"),
     path(
         "accounts/logout/",
-        auth_views.LogoutView.as_view(next_page="login"),
+        auth_views.LogoutView.as_view(next_page="todo_list"),
         name="logout",
     ),
     path("", include("todos.urls")),

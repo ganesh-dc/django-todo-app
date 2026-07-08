@@ -1,9 +1,11 @@
+from django.contrib import messages
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth import views as auth_views
 from django.db.models import Case, When, Value, IntegerField
 from django.shortcuts import render, redirect, get_object_or_404
+from django.urls import reverse
 from .models import Todo, Category
 
 PRIORITY_ORDER = Case(
@@ -12,6 +14,10 @@ PRIORITY_ORDER = Case(
     When(priority="low", then=Value(2)),
     output_field=IntegerField(),
 )
+
+
+def home(request):
+    return render(request, "todos/home.html")
 
 
 def signup(request):
@@ -28,9 +34,13 @@ def signup(request):
     return render(request, "todos/signup.html", {"form": form})
 
 
-@login_required
 def todo_list(request):
     if request.method == "POST":
+        if not request.user.is_authenticated:
+            messages.error(request, "Please log in to add a task.")
+            login_url = f"{reverse('login')}?next={request.path}"
+            return redirect(login_url)
+
         title = request.POST.get("title", "").strip()
         if title:
             due_date = request.POST.get("due_date") or None
@@ -49,27 +59,33 @@ def todo_list(request):
     query = request.GET.get("q", "").strip()
     category_id = request.GET.get("category", "")
 
-    todos = Todo.objects.filter(owner=request.user).select_related("category")
+    if request.user.is_authenticated:
+        todos = Todo.objects.filter(owner=request.user).select_related("category")
 
-    if status == "active":
-        todos = todos.filter(completed=False)
-    elif status == "completed":
-        todos = todos.filter(completed=True)
+        if status == "active":
+            todos = todos.filter(completed=False)
+        elif status == "completed":
+            todos = todos.filter(completed=True)
 
-    if query:
-        todos = todos.filter(title__icontains=query)
+        if query:
+            todos = todos.filter(title__icontains=query)
 
-    if category_id:
-        todos = todos.filter(category_id=category_id)
+        if category_id:
+            todos = todos.filter(category_id=category_id)
 
-    todos = todos.annotate(priority_rank=PRIORITY_ORDER).order_by(
-        "completed", "priority_rank", "due_date", "-created_at"
-    )
+        todos = todos.annotate(priority_rank=PRIORITY_ORDER).order_by(
+            "completed", "priority_rank", "due_date", "-created_at"
+        )
 
-    owner_todos = Todo.objects.filter(owner=request.user)
-    total = owner_todos.count()
-    completed_count = owner_todos.filter(completed=True).count()
-    percent = round((completed_count / total) * 100) if total else 0
+        owner_todos = Todo.objects.filter(owner=request.user)
+        total = owner_todos.count()
+        completed_count = owner_todos.filter(completed=True).count()
+        percent = round((completed_count / total) * 100) if total else 0
+    else:
+        todos = []
+        total = 0
+        completed_count = 0
+        percent = 0
 
     context = {
         "todos": todos,

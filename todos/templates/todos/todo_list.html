@@ -17,11 +17,15 @@
         <h1>✨ My Tasks</h1>
         <p><strong>{{ completed_count }}</strong> of <strong>{{ total }}</strong> tasks completed today</p>
         <div class="user-bar">
-          <span>👤 {{ request.user.username }}</span>
-          <form method="post" action="{% url 'logout' %}" style="display: inline;">
-            {% csrf_token %}
-            <button type="submit">🚪 Log out</button>
-          </form>
+          {% if request.user.is_authenticated %}
+            <span>👤 {{ request.user.username }}</span>
+            <form method="post" action="{% url 'logout' %}" style="display: inline;">
+              {% csrf_token %}
+              <button type="submit">🚪 Log out</button>
+            </form>
+          {% else %}
+            <a class="btn btn-secondary" href="{% url 'login' %}">🔐 Log in</a>
+          {% endif %}
         </div>
       </div>
       <div class="ring-wrap">
@@ -41,6 +45,9 @@
 
   <div class="wrap">
     <div class="card add-card">
+      {% if not request.user.is_authenticated %}
+        <div class="errorlist" style="margin-bottom: 16px;">Please log in to add a task.</div>
+      {% endif %}
       <form class="add-form" method="post" action="{% url 'todo_list' %}">
         {% csrf_token %}
         <input type="hidden" name="filter" value="{{ status }}">
