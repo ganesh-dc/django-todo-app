@@ -3,5 +3,5 @@ services:
     name: django-todo-app
     env: python
     plan: free
-    buildCommand: ./build.sh
+    buildCommand: bash build.sh
     startCommand: gunicorn todoproject.wsgi:application
