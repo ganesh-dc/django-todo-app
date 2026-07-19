@@ -2,6 +2,11 @@
 
 A Django todo app with categories, priorities, due dates, search, and filtering.
 
+# home page
+
+
+![TODOapp  Homepage](screenshots/homepage.png)
+
 ## Setup
 
 ```bash
