@@ -5,7 +5,7 @@ A Django todo app with categories, priorities, due dates, search, and filtering.
 # home page
 
 
-![TODOapp  Homepage](screenshots/homepage.png)
+![TODOapp  Homepage](screenshots/homepagetodo.png)
 
 ## Setup
 
